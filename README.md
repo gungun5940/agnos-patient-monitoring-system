@@ -88,7 +88,7 @@
 
 1. **Clone โปรเจกต์ และเปิดโฟลเดอร์**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/gungun5940/agnos-patient-monitoring-system.git
    cd agnos-patient-monitoring-system
    ```
 
@@ -212,7 +212,7 @@ This project uses the standard Next.js App Router structure without a `src` dire
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/gungun5940/agnos-patient-monitoring-system.git
    cd agnos-patient-monitoring-system
    ```
 
