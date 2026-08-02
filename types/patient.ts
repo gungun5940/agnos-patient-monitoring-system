@@ -21,16 +21,18 @@ export const patientFormSchema = z
     language: z.string().min(1, 'กรุณาระบุภาษาที่ต้องการใช้ (บังคับ)'),
     nationality: z.string().min(1, 'กรุณาระบุสัญชาติ (บังคับ)'),
     emergencyName: z.string().optional().or(z.literal('')),
+    emergencyPhone: z.string().optional().or(z.literal('')),
     emergencyRelation: z.string().optional().or(z.literal('')),
     religion: z.string().optional().or(z.literal('')),
   })
   .superRefine((data, ctx) => {
     const hasName = Boolean(data.emergencyName && data.emergencyName.trim().length > 0);
+    const hasPhone = Boolean(data.emergencyPhone && data.emergencyPhone.trim().length > 0);
     const hasRelation = Boolean(
       data.emergencyRelation && data.emergencyRelation.trim().length > 0
     );
 
-    if (hasName || hasRelation) {
+    if (hasName || hasPhone || hasRelation) {
       if (!hasName) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -38,11 +40,27 @@ export const patientFormSchema = z
           path: ['emergencyName'],
         });
       }
+      if (!hasPhone) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'หากเริ่มพิมพ์ผู้ติดต่อฉุกเฉิน กรุณากรอกเบอร์โทรให้ครบถ้วน',
+          path: ['emergencyPhone'],
+        });
+      }
       if (!hasRelation) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'หากเริ่มพิมพ์ผู้ติดต่อฉุกเฉิน กรุณากรอกความสัมพันธ์ให้ครบถ้วน',
           path: ['emergencyRelation'],
+        });
+      }
+    }
+    if (hasPhone && data.emergencyPhone) {
+      if (!/^[0-9\-\+\s]{9,12}$/.test(data.emergencyPhone.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'กรุณากรอกเบอร์โทรผู้ติดต่อฉุกเฉิน 9-12 หลักให้ถูกต้อง',
+          path: ['emergencyPhone'],
         });
       }
     }

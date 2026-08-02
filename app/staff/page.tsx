@@ -303,9 +303,9 @@ export default function StaffPage() {
                   </div>
                 </div>
 
-                <div className={`p-2.5 rounded-xl border transition-all text-xs ${activeField === 'emergencyName' || activeField === 'emergencyRelation' ? 'bg-rose-950/60 border-rose-500 text-rose-200 ring-2 ring-rose-500/30' : 'bg-slate-950 border-slate-800 text-slate-300'}`}>
+                <div className={`p-2.5 rounded-xl border transition-all text-xs ${activeField === 'emergencyName' || activeField === 'emergencyPhone' || activeField === 'emergencyRelation' ? 'bg-rose-950/60 border-rose-500 text-rose-200 ring-2 ring-rose-500/30' : 'bg-slate-950 border-slate-800 text-slate-300'}`}>
                   <span className="text-slate-500 block text-[10px]">ผู้ติดต่อฉุกเฉิน (Emergency Contact):</span>
-                  <span>{draftData.emergencyName ? `${draftData.emergencyName} (${draftData.emergencyRelation || 'ไม่ระบุความสัมพันธ์'})` : '-'}</span>
+                  <span>{draftData.emergencyName ? `${draftData.emergencyName} ${draftData.emergencyPhone ? `[โทร: ${draftData.emergencyPhone}]` : ''} (${draftData.emergencyRelation || 'ไม่ระบุความสัมพันธ์'})` : '-'}</span>
                 </div>
               </div>
             ) : status === 'submitted' ? (
@@ -470,7 +470,7 @@ export default function StaffPage() {
                   <span className="text-slate-500 block text-[10px]">ผู้ติดต่อฉุกเฉิน & ความสัมพันธ์ (Emergency Contact):</span>
                   <span className="text-rose-300 font-medium">
                     {selectedRecord.data.emergencyName
-                      ? `${selectedRecord.data.emergencyName} (${selectedRecord.data.emergencyRelation})`
+                      ? `${selectedRecord.data.emergencyName} ${selectedRecord.data.emergencyPhone ? `[โทร: ${selectedRecord.data.emergencyPhone}]` : ''} (${selectedRecord.data.emergencyRelation || '-'})`
                       : 'ไม่ได้ระบุ (None)'}
                   </span>
                 </div>

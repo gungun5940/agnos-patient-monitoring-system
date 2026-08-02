@@ -43,6 +43,7 @@ const BILINGUAL_FIELD_LABELS: Record<keyof PatientFormData, string> = {
   language: 'ภาษาที่ต้องการใช้ (Preferred Language)',
   nationality: 'สัญชาติ (Nationality)',
   emergencyName: 'ผู้ติดต่อฉุกเฉิน (Emergency Contact)',
+  emergencyPhone: 'เบอร์โทรผู้ติดต่อฉุกเฉิน (Emergency Phone)',
   emergencyRelation: 'ความสัมพันธ์ (Relationship)',
   religion: 'ศาสนา (Religion)',
 };
@@ -81,6 +82,7 @@ export default function PatientPage() {
       language: 'ไทย',
       nationality: 'ไทย',
       emergencyName: '',
+      emergencyPhone: '',
       emergencyRelation: '',
       religion: '',
     },
@@ -474,16 +476,30 @@ export default function PatientPage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start bg-rose-950/10 p-5 rounded-2xl border border-rose-900/30">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start bg-rose-950/10 p-5 rounded-2xl border border-rose-900/30">
                 {/* Emergency Name */}
                 <Input
                   label="ผู้ติดต่อฉุกเฉิน (Emergency Contact)"
-                  icon={<PhoneCall className="w-4 h-4 text-cyan-400" />}
+                  icon={<User className="w-4 h-4 text-cyan-400" />}
                   placeholder="เช่น นางสมศรี ใจดี (e.g. Mrs. Somsri)"
                   error={errors.emergencyName?.message}
                   onFocus={() => handleFieldFocus('emergencyName')}
                   {...register('emergencyName', {
                     onChange: () => handleFieldChange('emergencyName'),
+                    onBlur: () => handleFieldBlur(),
+                  })}
+                />
+
+                {/* Emergency Phone */}
+                <Input
+                  label="เบอร์โทรผู้ติดต่อฉุกเฉิน (Emergency Phone)"
+                  type="tel"
+                  icon={<PhoneCall className="w-4 h-4 text-cyan-400" />}
+                  placeholder="เช่น 0891234567 (e.g. 0891234567)"
+                  error={errors.emergencyPhone?.message}
+                  onFocus={() => handleFieldFocus('emergencyPhone')}
+                  {...register('emergencyPhone', {
+                    onChange: () => handleFieldChange('emergencyPhone'),
                     onBlur: () => handleFieldBlur(),
                   })}
                 />
