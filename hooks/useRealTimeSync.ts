@@ -36,6 +36,7 @@ interface BroadcastPayload {
 const REALTIME_CHANNEL_NAME = 'patient-registration-room';
 const STORAGE_SUBMITTED_KEY = 'patient_submitted_records_v2';
 const STORAGE_SYNC_EVENT_KEY = 'patient_sync_event_v2';
+const STORAGE_ACTIVE_SESSIONS_KEY = 'patient_active_sessions_v3';
 
 async function safeSendSupabase(channel: RealtimeChannel | null, payload: BroadcastPayload) {
   if (!channel || (channel as any).state !== 'joined') return;
@@ -107,7 +108,24 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
     };
   }, [status, draftData, activeField, activeFieldName, submittedRecords, activeSessionsMap]);
 
-  // Load saved submitted records from localStorage on initial render
+  // Save activeSessionsMap to localStorage
+  const saveActiveSessionsMap = useCallback((map: Record<string, PatientSession>) => {
+    if (typeof window !== 'undefined') {
+      try {
+        const filtered: Record<string, PatientSession> = {};
+        Object.keys(map).forEach((k) => {
+          if (map[k] && map[k].status !== 'inactive') {
+            filtered[k] = map[k];
+          }
+        });
+        localStorage.setItem(STORAGE_ACTIVE_SESSIONS_KEY, JSON.stringify(filtered));
+      } catch (err) {
+        console.warn('Failed to save active sessions map:', err);
+      }
+    }
+  }, []);
+
+  // Load saved submitted records and active sessions map from localStorage on initial render
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -118,8 +136,22 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
             setSubmittedRecords(parsed);
           }
         }
+
+        const savedSessions = localStorage.getItem(STORAGE_ACTIVE_SESSIONS_KEY);
+        if (savedSessions) {
+          const parsedSessions = JSON.parse(savedSessions);
+          if (parsedSessions && typeof parsedSessions === 'object') {
+            const validSessions: Record<string, PatientSession> = {};
+            Object.keys(parsedSessions).forEach((key) => {
+              if (parsedSessions[key] && parsedSessions[key].status !== 'inactive') {
+                validSessions[key] = parsedSessions[key];
+              }
+            });
+            setActiveSessionsMap(validSessions);
+          }
+        }
       } catch (err) {
-        console.warn('Failed to load submitted records:', err);
+        console.warn('Failed to load initial storage state:', err);
       }
     }
   }, []);
@@ -172,13 +204,16 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
           lastUpdated: now,
         };
 
-        return {
+        const nextMap = {
           ...prev,
           [sId]: updatedSession,
         };
+
+        saveActiveSessionsMap(nextMap);
+        return nextMap;
       });
     },
-    []
+    [saveActiveSessionsMap]
   );
 
   // Centralized message handler for incoming payloads (from Supabase, BroadcastChannel, or LocalStorage)
@@ -194,6 +229,7 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
         setActiveSessionsMap((prev) => {
           const copy = { ...prev };
           delete copy[payload.sessionId];
+          saveActiveSessionsMap(copy);
           return copy;
         });
       } else {
@@ -244,8 +280,8 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
           return updated;
         });
       } else if (payload.type === 'request_state') {
-        // Peer asked for current state
-        if (stateRef.current.submittedRecords.length > 0 || stateRef.current.status !== 'inactive') {
+        // Peer asked for current state - if this is a patient tab with session, always respond with sync_state
+        if (sessionId && (stateRef.current.status !== 'inactive' || Object.keys(stateRef.current.draftData).length > 0)) {
           const syncPayload: BroadcastPayload = {
             type: 'sync_state',
             sessionId,
@@ -269,9 +305,18 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
           setSubmittedRecords(payload.submittedRecords);
           saveSubmittedRecords(payload.submittedRecords);
         }
+        if (payload.sessionId && payload.status && payload.status !== 'inactive') {
+          updateSessionInMap(payload.sessionId, {
+            status: payload.status,
+            formData: payload.formData,
+            activeField: payload.activeField,
+            activeFieldName: payload.activeFieldName,
+            updatedAt: now,
+          });
+        }
       }
     },
-    [sessionId, updateSessionInMap, saveSubmittedRecords]
+    [sessionId, updateSessionInMap, saveSubmittedRecords, saveActiveSessionsMap]
   );
 
   // Dispatch payload across all transport layers (BroadcastChannel, LocalStorage, Supabase)
@@ -450,20 +495,31 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
   const updateDraft = useCallback(
     async (formData: Partial<PatientFormData>, fieldName?: string, fieldLabel?: string) => {
       const now = new Date().toISOString();
+      const mergedFormData = { ...stateRef.current.draftData, ...formData };
+      const currentActiveField = fieldName !== undefined ? fieldName : stateRef.current.activeField;
+      const currentActiveLabel = fieldLabel !== undefined ? fieldLabel : stateRef.current.activeFieldName;
+
+      // Synchronously update stateRef for instant concurrent reads
+      stateRef.current = {
+        ...stateRef.current,
+        status: 'filling',
+        draftData: mergedFormData,
+        activeField: currentActiveField,
+        activeFieldName: currentActiveLabel,
+      };
+
       setStatus('filling');
-      setDraftData((prev) => ({ ...prev, ...formData }));
+      setDraftData(mergedFormData);
       if (fieldName !== undefined) setActiveField(fieldName);
       if (fieldLabel !== undefined) setActiveFieldName(fieldLabel);
       setLastUpdated(now);
-
-      const mergedFormData = { ...stateRef.current.draftData, ...formData };
 
       // Update local session in activeSessionsMap
       updateSessionInMap(sessionId, {
         status: 'filling',
         formData: mergedFormData,
-        activeField: fieldName,
-        activeFieldName: fieldLabel,
+        activeField: currentActiveField,
+        activeFieldName: currentActiveLabel,
         updatedAt: now,
       });
 
@@ -472,8 +528,8 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
         sessionId,
         status: 'filling',
         formData: mergedFormData,
-        activeField: fieldName,
-        activeFieldName: fieldLabel,
+        activeField: currentActiveField,
+        activeFieldName: currentActiveLabel,
         updatedAt: now,
       });
     },
@@ -492,6 +548,14 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
       );
 
       const newStatus: FormStatus = hasAnyContent ? 'filling' : 'inactive';
+
+      stateRef.current = {
+        ...stateRef.current,
+        status: newStatus,
+        draftData: mergedFormData,
+        activeField: null,
+        activeFieldName: null,
+      };
 
       setStatus(newStatus);
       setDraftData(mergedFormData);

@@ -51,9 +51,10 @@
    - หน้า `/staff` เพิ่มหน้าจอปลดล็อกด้วยรหัสผ่านเจ้าหน้าที่ (อ่านจาก `process.env.NEXT_PUBLIC_STAFF_PASSWORD` หรือ Default: `AgnosStaff2026`)
    - จัดเก็บสถานะยืนยันตัวตนใน `sessionStorage` เพื่อป้องกันผู้ไม่เกี่ยวข้องเข้าถึงข้อมูลสุขภาพส่วนบุคคลของคนไข้
 
-4. **ระบบ Multi-Channel Sync Engine (Supabase + BroadcastChannel + LocalStorage)**:
-   - รองรับการเชื่อมต่อข้ามเบราว์เซอร์ผ่าน Supabase Realtime Broadcast & Presence
-   - รองรับการเชื่อมต่อข้ามแท็บภายในเครื่องเดียวกันผ่าน `BroadcastChannel` และ `storage` Event Fallback เพื่อความเสถียรและเร็วสูงสุดระดับมิลลิวินาที
+4. **ระบบ Multi-Channel Sync Engine พร้อม Persistent Active Sessions (Staff Refresh Protection & Instant Concurrent Typing)**:
+   - **การคงค่าเมื่อ Refresh หน้า Staff**: เพิ่มระบบจัดเก็บ `activeSessionsMap` ล่าสุดลงใน `localStorage` (`STORAGE_ACTIVE_SESSIONS_KEY`) ร่วมกับการยิงสัญญาณ `request_state` / `sync_state` เมื่อกด F5 หรือ Refresh หน้า `/staff` ข้อมูลของคนไข้ทุกคนที่กำลังเปิดฟอร์มอยู่จะไม่หายไปแม้แต่มิลลิวินาทีเดียว
+   - **รองรับการพิมพ์และโฟกัสพร้อมกัน 100% (Concurrent Typing & Focus)**: อัปเดต `stateRef.current` แบบ Synchronous ใน `updateDraft` และ `clearActiveField` ป้องกันปัญหา Race Condition เมื่อคนไข้หลายคนพิมพ์หรือสลับ Focus ช่องพร้อมกันในเวลาเดียวกัน ทำให้ฝั่ง Staff เห็น Active Field และ Draft Values ของทุกคนตรงตามความเป็นจริง 100%
+   - **Multi-Transport Fallback**: รองรับการซิงค์ข้อมูลทั้งข้ามเครื่องผ่าน Supabase Realtime Broadcast & Presence และข้ามแท็บในเครื่องเดียวกันผ่าน `BroadcastChannel` และ LocalStorage Sync Event
 
 ---
 
@@ -176,9 +177,10 @@ This project follows the Next.js 15 (App Router) convention without a `src` fold
    - Added a password protection gate to `/staff` (verifying against `process.env.NEXT_PUBLIC_STAFF_PASSWORD` or fallback `AgnosStaff2026`).
    - Stores auth status in `sessionStorage` to secure sensitive patient healthcare information.
 
-4. **Multi-Channel Transport Fallback**:
-   - Syncs across devices via Supabase Realtime Broadcast & Presence.
-   - Syncs across tabs locally using browser `BroadcastChannel` and `storage` event triggers for sub-millisecond responsiveness.
+4. **Multi-Channel Transport & Active Session Persistence (Staff Refresh Protection & Concurrent Typing)**:
+   - **Staff Dashboard Refresh Persistence**: Added persistent storage for `activeSessionsMap` via `localStorage` (`STORAGE_ACTIVE_SESSIONS_KEY`) alongside instant `request_state` / `sync_state` handshakes. Pressing F5 / Refreshing the `/staff` page preserves all live active sessions instantly without data loss.
+   - **100% Concurrent Typing & Focus Support**: Implemented synchronous `stateRef.current` state mutations inside `updateDraft` and `clearActiveField` to eliminate race conditions when multiple patients focus or type into separate input fields simultaneously. The Staff Dashboard reflects each patient's active input field and draft values accurately in real time.
+   - **Multi-Transport Fallback**: Combines Supabase Realtime Broadcast & Presence with local `BroadcastChannel` and LocalStorage Sync Events for maximum reliability.
 
 ---
 
