@@ -66,21 +66,10 @@ export default function PatientPage() {
     resetSyncStateRef.current = resetSyncState;
   }, [resetSyncState]);
 
-  // Reset sync state when leaving page, unmounting, or navigating back on mobile
+  // Reset sync state when leaving page or unmounting
   React.useEffect(() => {
-    const handleLeave = () => {
-      resetSyncStateRef.current();
-    };
-
-    window.addEventListener('pagehide', handleLeave);
-    window.addEventListener('beforeunload', handleLeave);
-    window.addEventListener('popstate', handleLeave);
-
     return () => {
-      handleLeave();
-      window.removeEventListener('pagehide', handleLeave);
-      window.removeEventListener('beforeunload', handleLeave);
-      window.removeEventListener('popstate', handleLeave);
+      resetSyncStateRef.current();
     };
   }, []);
 
