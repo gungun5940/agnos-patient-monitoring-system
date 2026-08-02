@@ -50,14 +50,28 @@ const BILINGUAL_FIELD_LABELS: Record<keyof PatientFormData, string> = {
 
 export default function PatientPage() {
   const [submittedId, setSubmittedId] = useState<string | null>(null);
-  const { updateDraft, clearActiveField, submitPatientForm, resetSyncState, isConnected, status, activeFieldName } = useRealTimeSync();
+  const {
+    sessionId,
+    updateDraft,
+    clearActiveField,
+    submitPatientForm,
+    resetSyncState,
+    isConnected,
+    status,
+    activeFieldName,
+  } = useRealTimeSync();
+
+  const resetSyncStateRef = React.useRef(resetSyncState);
+  React.useEffect(() => {
+    resetSyncStateRef.current = resetSyncState;
+  }, [resetSyncState]);
 
   // Reset sync state when leaving page or unmounting
   React.useEffect(() => {
     return () => {
-      resetSyncState();
+      resetSyncStateRef.current();
     };
-  }, [resetSyncState]);
+  }, []);
 
   const {
     register,
@@ -138,11 +152,14 @@ export default function PatientPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-950 px-3 py-1 rounded-full border border-slate-800">
               <Activity className={`w-3.5 h-3.5 ${isConnected ? 'text-emerald-400' : 'text-slate-500'}`} />
               <span>{isConnected ? 'Syncing Live' : 'Offline'}</span>
             </div>
+            <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded-full border border-cyan-800/80">
+              {sessionId}
+            </span>
             <StatusBadge status={status} activeFieldName={activeFieldName} />
           </div>
         </div>

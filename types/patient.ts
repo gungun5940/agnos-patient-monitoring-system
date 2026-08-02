@@ -86,3 +86,12 @@ export interface PatientRecord {
   submittedAt: string;
 }
 
+export interface PatientSession {
+  sessionId: string;
+  status: FormStatus;
+  draftData: Partial<PatientFormData>;
+  activeField: string | null;
+  activeFieldName: string | null;
+  lastUpdated: string;
+}
+
