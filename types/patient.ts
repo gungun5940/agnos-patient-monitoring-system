@@ -2,11 +2,13 @@ import { z } from 'zod';
 
 export const patientFormSchema = z
   .object({
+    title: z.string().min(1, 'กรุณาเลือกคำนำหน้าชื่อ (บังคับ)'),
     firstName: z.string().min(1, 'กรุณากรอกชื่อจริง (บังคับ)'),
     middleName: z.string().optional().or(z.literal('')),
     lastName: z.string().min(1, 'กรุณากรอกนามสกุล (บังคับ)'),
     dob: z.string().min(1, 'กรุณาระบุวันเดือนปีเกิด (บังคับ)'),
     gender: z.string().min(1, 'กรุณาเลือกเพศ (บังคับ)'),
+    symptoms: z.string().optional().or(z.literal('')),
     phone: z
       .string()
       .min(1, 'กรุณากรอกเบอร์โทรศัพท์ (บังคับ)')
@@ -16,7 +18,7 @@ export const patientFormSchema = z
       .min(1, 'กรุณากรอกอีเมล (บังคับ)')
       .email('รูปแบบอีเมลไม่ถูกต้อง'),
     address: z.string().min(1, 'กรุณากรอกที่อยู่ปัจจุบัน (บังคับ)'),
-    language: z.string().min(1, 'กรุณาระบุภาษาที่ถนัด (บังคับ)'),
+    language: z.string().min(1, 'กรุณาระบุภาษาที่ต้องการใช้ (บังคับ)'),
     nationality: z.string().min(1, 'กรุณาระบุสัญชาติ (บังคับ)'),
     emergencyName: z.string().optional().or(z.literal('')),
     emergencyRelation: z.string().optional().or(z.literal('')),
@@ -65,3 +67,4 @@ export interface PatientRecord {
   data: PatientFormData;
   submittedAt: string;
 }
+

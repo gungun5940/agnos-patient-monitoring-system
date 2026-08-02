@@ -21,30 +21,30 @@ import {
   Globe,
   Flag,
   Sparkles,
-  Heart,
   PhoneCall,
   HeartHandshake,
   Send,
   CheckCircle2,
   Activity,
-  ShieldCheck,
   RefreshCw,
 } from 'lucide-react';
 
-const THAI_FIELD_LABELS: Record<keyof PatientFormData, string> = {
-  firstName: 'ชื่อจริง',
-  middleName: 'ชื่อกลาง',
-  lastName: 'นามสกุล',
-  dob: 'วันเดือนปีเกิด',
-  gender: 'เพศ',
-  phone: 'เบอร์โทรศัพท์',
-  email: 'อีเมล',
-  address: 'ที่อยู่ปัจจุบัน',
-  language: 'ภาษาที่ต้องการใช้',
-  nationality: 'สัญชาติ',
-  emergencyName: 'ชื่อผู้ติดต่อฉุกเฉิน',
-  emergencyRelation: 'ความสัมพันธ์ผู้ติดต่อฉุกเฉิน',
-  religion: 'ศาสนา',
+const BILINGUAL_FIELD_LABELS: Record<keyof PatientFormData, string> = {
+  title: 'คำนำหน้า (Title)',
+  firstName: 'ชื่อจริง (First Name)',
+  middleName: 'ชื่อกลาง (Middle Name)',
+  lastName: 'นามสกุล (Last Name)',
+  dob: 'วันเกิด (Date of Birth)',
+  gender: 'เพศ (Gender)',
+  symptoms: 'อาการป่วยเบื้องต้น (Initial Symptoms)',
+  phone: 'เบอร์โทรศัพท์ (Phone)',
+  email: 'อีเมล (Email)',
+  address: 'ที่อยู่ปัจจุบัน (Current Address)',
+  language: 'ภาษาที่ต้องการใช้ (Preferred Language)',
+  nationality: 'สัญชาติ (Nationality)',
+  emergencyName: 'ผู้ติดต่อฉุกเฉิน (Emergency Contact)',
+  emergencyRelation: 'ความสัมพันธ์ (Relationship)',
+  religion: 'ศาสนา (Religion)',
 };
 
 export default function PatientPage() {
@@ -68,11 +68,13 @@ export default function PatientPage() {
     resolver: zodResolver(patientFormSchema),
     mode: 'onChange',
     defaultValues: {
+      title: 'นาย',
       firstName: '',
       middleName: '',
       lastName: '',
       dob: '',
       gender: '',
+      symptoms: '',
       phone: '',
       email: '',
       address: '',
@@ -86,13 +88,13 @@ export default function PatientPage() {
 
   const handleFieldChange = (fieldName: keyof PatientFormData) => {
     const values = getValues();
-    const label = THAI_FIELD_LABELS[fieldName] || String(fieldName);
+    const label = BILINGUAL_FIELD_LABELS[fieldName] || String(fieldName);
     updateDraft(values, fieldName, label);
   };
 
   const handleFieldFocus = (fieldName: keyof PatientFormData) => {
     const values = getValues();
-    const label = THAI_FIELD_LABELS[fieldName] || String(fieldName);
+    const label = BILINGUAL_FIELD_LABELS[fieldName] || String(fieldName);
     updateDraft(values, fieldName, label);
   };
 
@@ -122,15 +124,15 @@ export default function PatientPage() {
           <div className="flex items-center gap-3">
             <Link href="/" onClick={() => resetSyncState()}>
               <Button variant="ghost" size="sm" icon={<ArrowLeft className="w-4 h-4" />}>
-                ย้อนกลับ
+                ย้อนกลับ (Back)
               </Button>
             </Link>
             <div>
               <h1 className="text-xl font-bold text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-cyan-400" />
-                <span>แบบฟอร์มลงทะเบียนคนไข้ใหม่ (Patient Portal)</span>
+                <span>แบบฟอร์มลงทะเบียนคนไข้ (Patient Registration)</span>
               </h1>
-              <p className="text-xs text-slate-400">กรอกข้อมูลเพื่อรับการตรวจประวัติ (Agnos Care Standard)</p>
+              <p className="text-xs text-slate-400">กรอกข้อมูลระบบล่วงหน้า (Agnos Care Portal)</p>
             </div>
           </div>
 
@@ -152,10 +154,10 @@ export default function PatientPage() {
 
             <div className="space-y-2 max-w-md mx-auto">
               <h2 className="text-2xl font-bold text-white">
-                ลงทะเบียนคนไข้สำเร็จแล้ว!
+                ลงทะเบียนสำเร็จ! (Registration Completed)
               </h2>
               <p className="text-slate-400 text-sm">
-                ข้อมูลของคุณถูกส่งไปยังระบบมอนิเตอร์ของเจ้าหน้าที่แบบเรียลไทม์เรียบร้อยแล้ว
+                ข้อมูลส่งไปยังระบบมอนิเตอร์เจ้าหน้าที่เรียลไทม์เรียบร้อยแล้ว
               </p>
               <div className="inline-block bg-slate-950 px-5 py-2.5 rounded-xl border border-emerald-800/60 mt-2">
                 <span className="text-xs text-slate-500 block">รหัสประวัติผู้ป่วย (Patient ID)</span>
@@ -172,7 +174,7 @@ export default function PatientPage() {
                 onClick={handleRegisterNew}
                 icon={<RefreshCw className="w-4 h-4" />}
               >
-                ลงทะเบียนคนไข้คนถัดไป
+                ลงทะเบียนคนไข้คนถัดไป (Register Next Patient)
               </Button>
             </div>
           </div>
@@ -186,16 +188,44 @@ export default function PatientPage() {
             <div className="space-y-5">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-cyan-400 font-semibold text-sm">
                 <User className="w-4 h-4" />
-                <span>ส่วนที่ 1: ข้อมูลส่วนตัว (Personal Details)</span>
+                <span>ส่วนที่ 1: ข้อมูลส่วนตัว (Section 1: Personal Details)</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 items-start">
+                {/* Title / Prefix */}
+                <div className="w-full flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1 leading-snug">
+                    <span>คำนำหน้า (Title)</span>
+                    <span className="text-rose-400 font-bold shrink-0">*</span>
+                  </label>
+                  <div className="relative flex items-center">
+                    <UserCheck className="absolute left-3.5 w-4 h-4 text-cyan-400 pointer-events-none" />
+                    <select
+                      className="w-full pl-10 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all"
+                      onFocus={() => handleFieldFocus('title')}
+                      {...register('title', {
+                        onChange: () => handleFieldChange('title'),
+                        onBlur: () => handleFieldBlur(),
+                      })}
+                    >
+                      <option value="นาย">นาย (Mr.)</option>
+                      <option value="นาง">นาง (Mrs.)</option>
+                      <option value="นางสาว">นางสาว (Miss)</option>
+                      <option value="เด็กชาย">เด็กชาย (Master)</option>
+                      <option value="เด็กหญิง">เด็กหญิง (Young Miss)</option>
+                    </select>
+                  </div>
+                  {errors.title && (
+                    <p className="text-xs text-rose-400">• {errors.title.message}</p>
+                  )}
+                </div>
+
                 {/* First Name */}
                 <Input
-                  label="ชื่อจริง"
+                  label="ชื่อจริง (First Name)"
                   requiredField
                   icon={<User className="w-4 h-4 text-cyan-400" />}
-                  placeholder="เช่น สมชาย"
+                  placeholder="เช่น สมชาย (e.g. Somchai)"
                   error={errors.firstName?.message}
                   onFocus={() => handleFieldFocus('firstName')}
                   {...register('firstName', {
@@ -206,9 +236,9 @@ export default function PatientPage() {
 
                 {/* Middle Name */}
                 <Input
-                  label="ชื่อกลาง"
+                  label="ชื่อกลาง (Middle Name)"
                   icon={<UserCheck className="w-4 h-4 text-cyan-400" />}
-                  placeholder="ถ้ามี (สามารถเว้นว่างได้)"
+                  placeholder="ถ้ามี / เว้นว่างได้ (Optional)"
                   error={errors.middleName?.message}
                   onFocus={() => handleFieldFocus('middleName')}
                   {...register('middleName', {
@@ -219,10 +249,10 @@ export default function PatientPage() {
 
                 {/* Last Name */}
                 <Input
-                  label="นามสกุล"
+                  label="นามสกุล (Last Name)"
                   requiredField
                   icon={<Users className="w-4 h-4 text-cyan-400" />}
-                  placeholder="เช่น ใจดี"
+                  placeholder="เช่น ใจดี (e.g. Jaidee)"
                   error={errors.lastName?.message}
                   onFocus={() => handleFieldFocus('lastName')}
                   {...register('lastName', {
@@ -232,10 +262,10 @@ export default function PatientPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start pt-2">
                 {/* DOB */}
                 <Input
-                  label="วันเดือนปีเกิด"
+                  label="วันเดือนปีเกิด (Date of Birth)"
                   requiredField
                   type="date"
                   icon={<Calendar className="w-4 h-4 text-cyan-400" />}
@@ -249,9 +279,9 @@ export default function PatientPage() {
 
                 {/* Gender */}
                 <div className="w-full flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 inline-flex items-center gap-1.5 w-fit">
-                    <span>เพศ</span>
-                    <span className="text-rose-400 font-bold ml-0.5">*</span>
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1 leading-snug">
+                    <span>เพศ (Gender)</span>
+                    <span className="text-rose-400 font-bold shrink-0">*</span>
                   </label>
                   <div className="relative flex items-center">
                     <User className="absolute left-3.5 w-4 h-4 text-cyan-400 pointer-events-none" />
@@ -263,7 +293,7 @@ export default function PatientPage() {
                         onBlur: () => handleFieldBlur(),
                       })}
                     >
-                      <option value="">-- โปรดเลือกเพศ --</option>
+                      <option value="">-- โปรดเลือกเพศ (Select Gender) --</option>
                       <option value="ชาย">ชาย (Male)</option>
                       <option value="หญิง">หญิง (Female)</option>
                       <option value="ทางเลือก/อื่นๆ">ทางเลือก/อื่นๆ (Other)</option>
@@ -275,23 +305,49 @@ export default function PatientPage() {
                   )}
                 </div>
               </div>
+
+              {/* Symptoms / Chief Complaint */}
+              <div className="w-full flex flex-col gap-1.5 pt-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1 leading-snug">
+                    <span>อาการป่วยเบื้องต้น (Initial Symptoms)</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">⚪ ไม่บังคับกรอก (Optional)</span>
+                </div>
+                <div className="relative flex items-center">
+                  <Activity className="absolute left-3.5 top-3 w-4 h-4 text-cyan-400 pointer-events-none" />
+                  <textarea
+                    rows={2}
+                    placeholder="เช่น มีไข้สูง ไอ เจ็บคอ (e.g. Fever, cough, sore throat for 2 days)"
+                    className="w-full pl-10 rounded-xl border border-slate-800 bg-slate-900/90 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all resize-none"
+                    onFocus={() => handleFieldFocus('symptoms')}
+                    {...register('symptoms', {
+                      onChange: () => handleFieldChange('symptoms'),
+                      onBlur: () => handleFieldBlur(),
+                    })}
+                  />
+                </div>
+                {errors.symptoms && (
+                  <p className="text-xs text-rose-400">• {errors.symptoms.message}</p>
+                )}
+              </div>
             </div>
 
             {/* Section 2: Contact Details */}
             <div className="space-y-5">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-teal-400 font-semibold text-sm">
                 <Phone className="w-4 h-4" />
-                <span>ส่วนที่ 2: ข้อมูลการติดต่อและที่อยู่ (Contact & Address)</span>
+                <span>ส่วนที่ 2: ข้อมูลการติดต่อและที่อยู่ (Section 2: Contact & Address)</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
                 {/* Phone */}
                 <Input
-                  label="เบอร์โทรศัพท์"
+                  label="เบอร์โทรศัพท์ (Phone)"
                   requiredField
                   type="tel"
                   icon={<Phone className="w-4 h-4 text-cyan-400" />}
-                  placeholder="เช่น 0812345678"
+                  placeholder="เช่น 0812345678 (e.g. 0812345678)"
                   error={errors.phone?.message}
                   onFocus={() => handleFieldFocus('phone')}
                   {...register('phone', {
@@ -302,11 +358,11 @@ export default function PatientPage() {
 
                 {/* Email */}
                 <Input
-                  label="อีเมล"
+                  label="อีเมล (Email)"
                   requiredField
                   type="email"
                   icon={<Mail className="w-4 h-4 text-cyan-400" />}
-                  placeholder="เช่น patient@example.com"
+                  placeholder="เช่น patient@example.com (e.g. patient@example.com)"
                   error={errors.email?.message}
                   onFocus={() => handleFieldFocus('email')}
                   {...register('email', {
@@ -318,15 +374,15 @@ export default function PatientPage() {
 
               {/* Address */}
               <div className="w-full flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 inline-flex items-center gap-1.5 w-fit">
-                  <span>ที่อยู่ปัจจุบัน</span>
-                  <span className="text-rose-400 font-bold ml-0.5">*</span>
+                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1 leading-snug">
+                  <span>ที่อยู่ปัจจุบัน (Current Address)</span>
+                  <span className="text-rose-400 font-bold shrink-0">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Home className="absolute left-3.5 top-3 w-4 h-4 text-cyan-400 pointer-events-none" />
                   <textarea
                     rows={2}
-                    placeholder="กรอกบ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"
+                    placeholder="กรอกบ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด (Full Address Details)"
                     className="w-full pl-10 rounded-xl border border-slate-800 bg-slate-900/90 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 transition-all resize-none"
                     onFocus={() => handleFieldFocus('address')}
                     {...register('address', {
@@ -345,15 +401,15 @@ export default function PatientPage() {
             <div className="space-y-5">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-indigo-400 font-semibold text-sm">
                 <Globe className="w-4 h-4" />
-                <span>ส่วนที่ 3: ภาษา สัญชาติ และศาสนา (Background Info)</span>
+                <span>ส่วนที่ 3: ภาษา สัญชาติ และศาสนา (Section 3: Language & Background)</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
                 {/* Language */}
                 <div className="w-full flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 inline-flex items-center gap-1.5 w-fit">
-                    <span>ภาษาที่ต้องการใช้</span>
-                    <span className="text-rose-400 font-bold ml-0.5">*</span>
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1 leading-snug">
+                    <span>ภาษาที่ต้องการใช้ (Preferred Language)</span>
+                    <span className="text-rose-400 font-bold shrink-0">*</span>
                   </label>
                   <div className="relative flex items-center">
                     <Globe className="absolute left-3.5 w-4 h-4 text-cyan-400 pointer-events-none" />
@@ -379,10 +435,10 @@ export default function PatientPage() {
 
                 {/* Nationality */}
                 <Input
-                  label="สัญชาติ"
+                  label="สัญชาติ (Nationality)"
                   requiredField
                   icon={<Flag className="w-4 h-4 text-cyan-400" />}
-                  placeholder="เช่น ไทย"
+                  placeholder="เช่น ไทย (e.g. Thai)"
                   error={errors.nationality?.message}
                   onFocus={() => handleFieldFocus('nationality')}
                   {...register('nationality', {
@@ -393,9 +449,9 @@ export default function PatientPage() {
 
                 {/* Religion */}
                 <Input
-                  label="ศาสนา"
+                  label="ศาสนา (Religion)"
                   icon={<Sparkles className="w-4 h-4 text-cyan-400" />}
-                  placeholder="พุทธ / คริสต์ / อิสลาม (เว้นว่างได้)"
+                  placeholder="พุทธ / คริสต์ / อิสลาม (Optional)"
                   error={errors.religion?.message}
                   onFocus={() => handleFieldFocus('religion')}
                   {...register('religion', {
@@ -411,19 +467,19 @@ export default function PatientPage() {
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2 text-rose-400 font-semibold text-sm">
                   <PhoneCall className="w-4 h-4" />
-                  <span>ส่วนที่ 4: ผู้ติดต่อฉุกเฉิน (Emergency Contact)</span>
+                  <span>ส่วนที่ 4: ผู้ติดต่อฉุกเฉิน (Section 4: Emergency Contact)</span>
                 </div>
                 <span className="text-[11px] text-slate-400 bg-rose-950/40 border border-rose-800/50 px-2.5 py-0.5 rounded-full">
-                  ไม่บังคับกรอก แต่หากพิมพ์ต้องกรอกคู่กันทั้งชื่อและความสัมพันธ์
+                  ไม่บังคับกรอก (Optional Field)
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-rose-950/10 p-5 rounded-2xl border border-rose-900/30">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start bg-rose-950/10 p-5 rounded-2xl border border-rose-900/30">
                 {/* Emergency Name */}
                 <Input
-                  label="ชื่อ-นามสกุล ผู้ติดต่อฉุกเฉิน"
+                  label="ผู้ติดต่อฉุกเฉิน (Emergency Contact)"
                   icon={<PhoneCall className="w-4 h-4 text-cyan-400" />}
-                  placeholder="เช่น นางสมศรี ใจดี"
+                  placeholder="เช่น นางสมศรี ใจดี (e.g. Mrs. Somsri)"
                   error={errors.emergencyName?.message}
                   onFocus={() => handleFieldFocus('emergencyName')}
                   {...register('emergencyName', {
@@ -434,9 +490,9 @@ export default function PatientPage() {
 
                 {/* Emergency Relation */}
                 <Input
-                  label="ความสัมพันธ์"
+                  label="ความสัมพันธ์ (Relationship)"
                   icon={<HeartHandshake className="w-4 h-4 text-cyan-400" />}
-                  placeholder="เช่น มารดา / สามี / พี่สาว"
+                  placeholder="เช่น มารดา / สามี (e.g. Mother / Spouse)"
                   error={errors.emergencyRelation?.message}
                   onFocus={() => handleFieldFocus('emergencyRelation')}
                   {...register('emergencyRelation', {
@@ -456,7 +512,7 @@ export default function PatientPage() {
                 isLoading={isSubmitting}
                 icon={<Send className="w-4 h-4" />}
               >
-                ส่งข้อมูลลงทะเบียนคนไข้ (Submit)
+                ส่งข้อมูลลงทะเบียนคนไข้ (Submit Registration)
               </Button>
             </div>
           </form>

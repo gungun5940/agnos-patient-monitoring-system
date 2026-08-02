@@ -13,9 +13,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full flex flex-col gap-1.5">
         {label && (
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 inline-flex items-center gap-1.5 w-fit">
+          <label className="text-xs font-semibold text-slate-300 flex items-center gap-1 leading-snug">
             <span>{label}</span>
-            {requiredField && <span className="text-rose-400 font-bold ml-0.5">*</span>}
+            {requiredField && <span className="text-rose-400 font-bold shrink-0">*</span>}
           </label>
         )}
         <div className="relative flex items-center group">
