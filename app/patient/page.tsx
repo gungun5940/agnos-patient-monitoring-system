@@ -61,15 +61,32 @@ export default function PatientPage() {
     activeFieldName,
   } = useRealTimeSync();
 
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const resetSyncStateRef = React.useRef(resetSyncState);
   React.useEffect(() => {
     resetSyncStateRef.current = resetSyncState;
   }, [resetSyncState]);
 
-  // Reset sync state when leaving page or unmounting
+  // Reset sync state when leaving page, unmounting, or navigating back on mobile
   React.useEffect(() => {
-    return () => {
+    const handleLeave = () => {
       resetSyncStateRef.current();
+    };
+
+    window.addEventListener('pagehide', handleLeave);
+    window.addEventListener('beforeunload', handleLeave);
+    window.addEventListener('popstate', handleLeave);
+
+    return () => {
+      handleLeave();
+      window.removeEventListener('pagehide', handleLeave);
+      window.removeEventListener('beforeunload', handleLeave);
+      window.removeEventListener('popstate', handleLeave);
     };
   }, []);
 
@@ -157,8 +174,8 @@ export default function PatientPage() {
               <Activity className={`w-3.5 h-3.5 ${isConnected ? 'text-emerald-400' : 'text-slate-500'}`} />
               <span>{isConnected ? 'Syncing Live' : 'Offline'}</span>
             </div>
-            <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded-full border border-cyan-800/80">
-              {sessionId}
+            <span suppressHydrationWarning className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded-full border border-cyan-800/80">
+              {sessionId || 'SES-SYNCING'}
             </span>
             <StatusBadge status={status} activeFieldName={activeFieldName} />
           </div>
