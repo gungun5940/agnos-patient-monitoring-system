@@ -268,7 +268,7 @@ export default function StaffPage() {
                         </span>
                         <span className="text-xs font-bold text-white">
                           {d.title ? `${d.title} ` : ''}
-                          {d.firstName || 'กำลังป้อนชื่อ...'} {d.lastName || ''}
+                          {d.firstName || 'กำลังป้อนชื่อ...'} {d.middleName ? `${d.middleName} ` : ''}{d.lastName || ''}
                         </span>
                       </div>
 
@@ -299,8 +299,8 @@ export default function StaffPage() {
                       </div>
                     )}
 
-                    {/* Live Patient Draft Details Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    {/* Live Patient Draft Details Grid - All Fields */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <div
                         className={`p-2 rounded-xl border transition-all ${
                           session.activeField === 'title'
@@ -321,6 +321,17 @@ export default function StaffPage() {
                       >
                         <span className="text-slate-500 block text-[10px]">ชื่อจริง (First Name):</span>
                         <span className="font-semibold text-white">{d.firstName || '-'}</span>
+                      </div>
+
+                      <div
+                        className={`p-2 rounded-xl border transition-all ${
+                          session.activeField === 'middleName'
+                            ? 'bg-cyan-950 border-cyan-500 text-cyan-200 ring-2 ring-cyan-500/30'
+                            : 'bg-slate-900 border-slate-800/80 text-slate-300'
+                        }`}
+                      >
+                        <span className="text-slate-500 block text-[10px]">ชื่อกลาง (Middle Name):</span>
+                        <span className="text-white">{d.middleName || '-'}</span>
                       </div>
 
                       <div
@@ -366,22 +377,7 @@ export default function StaffPage() {
                         <span className="text-slate-500 block text-[10px]">เบอร์โทร (Phone):</span>
                         <span className="font-mono text-white">{d.phone || '-'}</span>
                       </div>
-                    </div>
 
-                    {/* Symptoms Box */}
-                    <div
-                      className={`p-2.5 rounded-xl border transition-all text-xs ${
-                        session.activeField === 'symptoms'
-                          ? 'bg-amber-950/80 border-amber-500 text-amber-200 ring-2 ring-amber-500/30'
-                          : 'bg-slate-900 border-slate-800/80 text-slate-300'
-                      }`}
-                    >
-                      <span className="text-slate-500 block text-[10px]">อาการป่วยเบื้องต้น (Initial Symptoms):</span>
-                      <span className="font-medium text-amber-300/90">{d.symptoms || '-'}</span>
-                    </div>
-
-                    {/* Contact & Emergency Details */}
-                    <div className="grid grid-cols-2 gap-2 text-xs">
                       <div
                         className={`p-2 rounded-xl border transition-all ${
                           session.activeField === 'email'
@@ -400,11 +396,58 @@ export default function StaffPage() {
                             : 'bg-slate-900 border-slate-800/80 text-slate-300'
                         }`}
                       >
-                        <span className="text-slate-500 block text-[10px]">ภาษาที่ต้องการใช้ (Preferred Language):</span>
+                        <span className="text-slate-500 block text-[10px]">ภาษา (Language):</span>
                         <span className="font-semibold text-white">{d.language || '-'}</span>
+                      </div>
+
+                      <div
+                        className={`p-2 rounded-xl border transition-all ${
+                          session.activeField === 'nationality'
+                            ? 'bg-cyan-950 border-cyan-500 text-cyan-200 ring-2 ring-cyan-500/30'
+                            : 'bg-slate-900 border-slate-800/80 text-slate-300'
+                        }`}
+                      >
+                        <span className="text-slate-500 block text-[10px]">สัญชาติ (Nationality):</span>
+                        <span className="font-semibold text-white">{d.nationality || '-'}</span>
+                      </div>
+
+                      <div
+                        className={`p-2 rounded-xl border transition-all col-span-2 ${
+                          session.activeField === 'religion'
+                            ? 'bg-cyan-950 border-cyan-500 text-cyan-200 ring-2 ring-cyan-500/30'
+                            : 'bg-slate-900 border-slate-800/80 text-slate-300'
+                        }`}
+                      >
+                        <span className="text-slate-500 block text-[10px]">ศาสนา (Religion):</span>
+                        <span className="font-semibold text-white">{d.religion || '-'}</span>
                       </div>
                     </div>
 
+                    {/* Symptoms Box */}
+                    <div
+                      className={`p-2.5 rounded-xl border transition-all text-xs ${
+                        session.activeField === 'symptoms'
+                          ? 'bg-amber-950/80 border-amber-500 text-amber-200 ring-2 ring-amber-500/30'
+                          : 'bg-slate-900 border-slate-800/80 text-slate-300'
+                      }`}
+                    >
+                      <span className="text-slate-500 block text-[10px]">อาการป่วยเบื้องต้น (Initial Symptoms):</span>
+                      <span className="font-medium text-amber-300/90">{d.symptoms || '-'}</span>
+                    </div>
+
+                    {/* Address Box */}
+                    <div
+                      className={`p-2.5 rounded-xl border transition-all text-xs ${
+                        session.activeField === 'address'
+                          ? 'bg-cyan-950 border-cyan-500 text-cyan-200 ring-2 ring-cyan-500/30'
+                          : 'bg-slate-900 border-slate-800/80 text-slate-300'
+                      }`}
+                    >
+                      <span className="text-slate-500 block text-[10px]">ที่อยู่ปัจจุบัน (Current Address):</span>
+                      <span className="text-slate-200">{d.address || '-'}</span>
+                    </div>
+
+                    {/* Emergency Contact */}
                     <div
                       className={`p-2.5 rounded-xl border transition-all text-xs ${
                         session.activeField === 'emergencyName' ||
