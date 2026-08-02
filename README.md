@@ -1,252 +1,151 @@
-# Agnos Patient Registration & Live Monitor (ระบบลงทะเบียนคนไข้และติดตามผลแบบ Real-time)
+# Agnos Patient Registration & Live Monitor
 
-ระบบลงทะเบียนคนไข้ล่วงหน้าพร้อมหน้าจอติดตามผลแบบ Real-time พัฒนาด้วย Next.js (App Router), Supabase Realtime (Broadcast Channels), Tailwind CSS และ React Hook Form + Zod 
+Real-time patient intake system and staff live monitoring dashboard built with Next.js 15 (App Router), Supabase Realtime (Broadcast Channels), Tailwind CSS v4, and React Hook Form + Zod.
 
 ---
 
 ## 🇹🇭 Thai Version (ภาษาไทย)
 
-### 1. Technical Overview (ภาพรวมทางเทคนิค)
+### 1. Overview of the Project (ภาพรวมระบบ)
 
-โปรเจกต์นี้แยกการทำงานออกเป็น 2 หน้าหลัก:
-1. **หน้าลงทะเบียนคนไข้ (`/patient`)**: ฟอร์มกรอกข้อมูล 12 ช่อง แบ่งเป็นหมวดหมู่ชัดเจนเพื่อไม่ให้คนไข้รู้สึกซ้อนทับหรือลายตา ใช้ React Hook Form ร่วมกับ Zod ในการตรวจเช็คความถูกต้องของข้อมูล (Validation) และดักจับ Event `onFocus`, `onChange`, `onBlur` เพื่อส่งข้อมูลไปหาเจ้าหน้าที่
-2. **หน้าจอติดตามของเจ้าหน้าที่ (`/staff`)**: Dashboard โทนสีเข้ม (Dark Mode) สำหรับเจ้าหน้าที่ ใช้ดูว่าตอนนี้มีคนไข้กำลังกรอกข้อมูลอยู่หรือไม่ (สถานะ `inactive`, `filling`, `submitted`), กำลังพิมพ์อยู่ที่ช่องไหน (Live Field Highlight) และดูรายการฟอร์มที่กดส่งเรียบร้อยแล้ว
+ระบบลงทะเบียนคนไข้ล่วงหน้าและติดตามผลแบบ Real-time พัฒนาขึ้นเพื่อแก้ไขปัญหาการจัดเก็บข้อมูลคนไข้ที่ล่าช้า โดยแบ่งการทำงานออกเป็น 2 หน้าหลักในโครงการ Next.js (App Router แบบไม่มีโฟลเดอร์ `src`):
 
-**Stack ที่ใช้:**
-- **Framework**: Next.js 15 (App Router) + React 19
-- **Real-Time Engine**: Supabase Realtime (Broadcast Channel) + ระบบ Fallback เป็น LocalStorage Sync หากเครือข่ายมีปัญหา
+1. **หน้าลงทะเบียนคนไข้ (`/patient`)**: ฟอร์มกรอกข้อมูล 12 ช่องทางฝั่งคนไข้ แบ่งการ์ดออกเป็น 4 หมวดหมู่อย่างเป็นระเบียบ ใช้ React Hook Form ร่วมกับ Zod Schema ในการตรวจสอบความถูกต้องของข้อมูล (Validation) และส่ง Event (`onFocus`, `onChange`, `onBlur`) ไปยังระบบ Real-time
+2. **หน้าจอติดตามของเจ้าหน้าที่ (`/staff`)**: Dashboard โทนสีเข้มสำหรับเจ้าหน้าที่โรงพยาบาล แสดงสถานะฟอร์มคนไข้ (`inactive`, `filling`, `submitted`), จุดที่คนไข้กำลังพิมพ์ข้อมูลอยู่แบบกระพริบสด (Live Field Highlighting) และรายการฟอร์มที่กดส่งเรียบร้อยแล้วทันทีโดยไม่ต้องกด Refresh
+
+**Tech Stack หลัก:**
+- **Framework**: Next.js 15 (App Router) + React 19 + TypeScript
+- **Real-Time Engine**: Supabase Realtime (`@supabase/supabase-js`) ส่งผ่าน Broadcast Channels + LocalStorage Sync Fallback
 - **Form & Validation**: React Hook Form + Zod (`@hookform/resolvers/zod`)
 - **Styling**: Tailwind CSS v4 + Lucide React Icons
 
 ---
 
-### 2. Project Structure (โครงสร้างไฟล์ในโปรเจกต์)
+### 2. Setup / Local Development Instructions (ขั้นตอนการติดตั้งและสั่งรัน)
 
-โปรเจกต์นี้ไม่ได้ใช้โฟลเดอร์ `src` โดยจัดวางไฟล์ตามโครงสร้าง App Router ดังนี้:
+ขั้นตอนการติดตั้งและทดสอบระบบบนเครื่องคอมพิวเตอร์ (Local Machine):
 
-```text
-.
-├── app/
-│   ├── globals.css         # ไฟล์ CSS สไตล์หลักและตั้งค่า Tailwind
-│   ├── layout.tsx          # Layout หลักของแอป
-│   ├── page.tsx            # หน้าแรกสำหรับเลือกบทบาท (คนไข้ / เจ้าหน้าที่)
-│   ├── patient/
-│   │   └── page.tsx        # หน้าฟอร์มกรอกข้อมูลของคนไข้
-│   └── staff/
-│       └── page.tsx        # หน้าจอ Dashboard สำหรับเจ้าหน้าที่
-├── components/
-│   └── ui/
-│       ├── Button.tsx      # ปุ่มกด Reusable รองรับ variant และสถานะ loading
-│       ├── Input.tsx       # กล่องกรอกข้อมูลพร้อมไอคอนและข้อความแจ้งเตือน error
-│       └── StatusBadge.tsx # ป้ายแสดงสถานะ (กำลังกรอก, ไม่อยู่ในหน้าฟอร์ม, ส่งแล้ว)
-├── hooks/
-│   └── useRealTimeSync.ts  # Custom Hook จัดการ Supabase Broadcast, Debounce และ LocalStorage Sync
-├── lib/
-│   └── supabase.ts        # ไฟล์ตั้งค่า Supabase Client
-├── types/
-│   └── patient.ts         # ไฟล์เก็บ Type, Zod Schema และชื่อฟิลด์ภาษาไทย
-├── package.json
-└── README.md
+#### Step 1: Clone Repository & Install Dependencies
+```bash
+# Clone โปรเจกต์เข้าเครื่อง
+git clone https://github.com/gungun5940/agnos-patient-monitoring-system.git
+cd agnos-patient-monitoring-system
+
+# ติดตั้งแพ็กเกจทั้งหมด
+npm install
 ```
 
-#### เหตุผลในการออกแบบ UI/UX และ Clean Code:
-- **แบ่งหมวดหมู่ฟอร์ม 12 ช่อง**: การใส่ฟอร์ม 12 ช่องไว้ในหน้าเดียวอาจทำให้ผู้ใช้รู้สึกเหนื่อยล้า (Cognitive Load) จึงแบ่งเป็น 4 การ์ดย่อย (*ข้อมูลส่วนตัว*, *ช่องทางติดต่อ*, *เชื้อชาติ/ภาษา*, *ผู้ติดต่อฉุกเฉิน*)
-- **หน้า Staff เป็น Dark Mode**: เจ้าหน้าที่ต้องเฝ้าหน้าจอนานๆ การใช้สีโทนเข้มเข้ม (`bg-slate-950`) ช่วยลดอาการปวดตาและความเครียดจากแสงจอ (Screen Fatigue)
-- **แยก Reusable UI Components**: แยก `Input`, `Button`, `StatusBadge` ออกมาเป็น component กลาง เพื่อลดโค้ดซ้ำซ้อน (DRY Principle) และง่ายต่อการปรับแต่งธีมในอนาคต
-
----
-
-### 3. Real-Time Data Flow & Sync Workflow (การไหลของข้อมูล)
-
-```text
-[ คนไข้คลิก/พิมพ์ในฟอร์ม ]
-           │
-           ▼
-[ React Hook Form Capture ] (Event: Focus / Typing / Blur)
-           │
-           ▼
-[ useRealTimeSync Hook ]
-   ├── สลับสถานะเป็น "filling" และแจ้งเตือนชื่อช่องที่กำลังพิมพ์ทันที (Instant)
-   └── หน่วงเวลา 3 วินาที (Debounce 3s) ก่อนส่งข้อมูล Draft ทั้งหมด
-           │
-           ▼
-[ Supabase Broadcast Channel ] (ถ้าหลุดจะใช้ LocalStorage Sync แทน)
-           │
-           ▼
-[ หน้าจอเจ้าหน้าที่ (/staff) ]
-   ├── ป้ายสถานะเปลี่ยนตามจริง (Filling / Inactive / Submitted)
-   ├── กล่องข้อความกรอกข้อมูลของเจ้าหน้าที่กระพริบตามช่องที่คนไข้แตะ
-   └── แสดงข้อมูลดราฟต์และประวัติการส่งฟอร์ม
+#### Step 2: Configure Environment Variables (Optional)
+สร้างไฟล์ `.env.local` ที่ Root ของโปรเจกต์ (หากไม่ได้ตั้งค่า ระบบมีค่าสำรอง built-in fallback และรองรับการเชื่อมต่อผ่าน LocalStorage Sync ข้ามหน้าต่างโดยอัตโนมัติ):
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-- **Debounce Strategy (3 วินาที)**: เพื่อไม่ให้ส่ง Request ถี่เกินไปขณะคนไข้พิมพ์ จะส่งเฉพาะตำแหน่งฟิลด์แบบทันที ส่วนตัวเนื้อหาฟอร์มจะรอให้หยุดพิมพ์ 3 วินาทีก่อนส่ง draft ชุดใหม่
-- **การคืนค่าสถานะ Inactive**: เมื่อคนไข้ละความสนใจจากฟอร์ม (Unfocus ทุกช่อง) หรือกดปุ่มย้อนกลับ ระบบจะล้างสถานะและปรับเป็น `inactive` อัตโนมัติ
+#### Step 3: Run Development Server
+```bash
+npm run dev
+```
+เปิดเบราว์เซอร์ไปที่ [http://localhost:3000](http://localhost:3000)
+- **หน้าต่างที่ 1**: เข้าไปที่ `/patient` (เปิดหน้าลงทะเบียนคนไข้)
+- **หน้าต่างที่ 2**: เข้าไปที่ `/staff` (เปิดหน้าจอติดตามของเจ้าหน้าที่)
+- ทดลองกรอกข้อมูลในหน้า `/patient` และดูการอัปเดตแบบ Real-time บนหน้า `/staff`
+
+#### Step 4: Build & Production Start
+```bash
+# ตรวจสอบการคอมไพล์และสร้าง Production Build
+npm run build
+
+# สั่งรัน Production Server
+npm run start
+```
 
 ---
 
-### 4. How to Run / Setup Instructions (วิธีติดตั้งและสั่งรัน)
+### 3. Descriptions of Bonus Features Implemented (ฟีเจอร์พิเศษเพิ่มเติม)
 
-1. **Clone โปรเจกต์ และเปิดโฟลเดอร์**:
-   ```bash
-   git clone https://github.com/gungun5940/agnos-patient-monitoring-system.git
-   cd agnos-patient-monitoring-system
-   ```
+1. **3-Second Debounce & Smart Inactive Switching (ระบบหน่วงเวลา 3 วินาทีและการสลับสถานะ Inactive)**:
+   - ขณะคนไข้พิมพ์ข้อมูล ระบบจะส่งตำแหน่งช่องที่แตะไปหาเจ้าหน้าที่แบบทันที (Instant Focus Broadcast)
+   - ข้อมูลตัวอักษรในฟอร์มจะถูกหน่วงเวลาไว้ 3 วินาที (3s Debounce) เพื่อไม่ให้ส่ง Request ถี่เกินไปจนหน่วงเครือข่าย
+   - เมื่อคนไข้ละสายตาออกจากฟอร์ม (Unfocus ทุกช่อง) หรือกดปุ่ม "ย้อนกลับ" ระบบจะคำนวณและส่งสัญญาณสลับสถานะกลับเป็น `inactive` หรือล้างสถานะอย่างแม่นยำ
 
-2. **ติดตั้ง Dependencies**:
-   ```bash
-   npm install
-   ```
+2. **Live Field Highlighting (ไฟกระพริบเตือนช่องที่กำลังพิมพ์)**:
+   - ฝั่งเจ้าหน้าที่แสดงการ์ดกรอกข้อมูลที่มีขอบสีฟ้ากระพริบพร้อมระบุชื่อช่องภาษาไทย เช่น *"กำลังกรอก: เบอร์โทรศัพท์"*
+   - ช่วยให้เจ้าหน้าที่รู้ความเคลื่อนไหวของคนไข้ได้ในวินาทีจริง
 
-3. **ตั้งค่า Environment Variables (ถ้ามี)**:
-   สร้างไฟล์ `.env.local` ไว้ที่ Root ของโปรเจกต์ (ถ้าไม่สร้าง ระบบจะใช้ค่าคีย์สำรองที่มีอยู่ในไฟล์ `lib/supabase.ts` ร่วมกับระบบ LocalStorage Sync ให้โดยอัตโนมัติ):
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   ```
-
-4. **สั่งรัน Development Server**:
-   ```bash
-   npm run dev
-   ```
-   เปิดเว็บบราวเซอร์ไปที่ [http://localhost:3000](http://localhost:3000)
-   - เปิดหน้าต่างแรกไปที่ `/patient` (คนไข้)
-   - เปิดอีกหน้าต่างไปที่ `/staff` (เจ้าหน้าที่)
-   - ลองพิมพ์ข้อมูลในหน้าคนไข้ แล้วสังเกตผลในหน้าเจ้าหน้าที่แบบ Real-time
-
----
-
-### 5. Bonus Features Implemented (ฟีเจอร์พิเศษเพิ่มเติม)
-
-1. **Live Field Highlighting (ไฟกระพริบเตือนช่องที่กำลังพิมพ์)**:
-   เจ้าหน้าที่สามารถเห็นได้ทันทีว่าคนไข้กำลังแตะหรือพิมพ์อยู่ที่ฟิลด์ไหน โดยจะขึ้นขอบสีฟ้ากระพริบพร้อมชื่อฟิลด์ภาษาไทย (เช่น *"กำลังกรอก: ชื่อจริง"*)
-2. **ระบบดักฟอร์มด้วย Zod Validation (ภาษาไทย)**:
-   มีการตรวจเช็คความถูกต้องของข้อมูล เช่น เบอร์โทรศัพท์ต้องเป็นรูปแบบเบอร์ไทย (9-10 หลัก), อีเมลถูกต้องตามรูปแบบ, รหัสประจำตัวประชาชน/พาสปอร์ตถูกต้อง พร้อมข้อความแจ้งเตือนภาษาไทยเข้าใจง่าย
-3. **ระบบสลับสถานะและล้างค่าเมื่อย้อนกลับ**:
-   เมื่อคนไข้กดปุ่ม "ย้อนกลับ" หรือส่งฟอร์มสำเร็จ ระบบจะส่งสัญญาณล้างสถานะดราฟต์ไปยังหน้าเจ้าหน้าที่ทันที ไม่ทิ้งสถานะค้างไว้
-4. **Dual-Sync Engine (Supabase + LocalStorage Fallback)**:
-   หากเน็ตหลุดหรือไม่ได้ต่อ Supabase ระบบจะสลับไปใช้ `window.addEventListener('storage')` ให้เปิดทดสอบ 2 หน้าต่างในเครื่องเดียวกันได้ราบรื่น 100%
+3. **Strict Zod Form Validation (การตรวจสอบข้อมูลอย่างแน่นหนา)**:
+   - ตรวจสอบความถูกต้องครบถ้วนทั้ง 12 ช่อง เช่น เบอร์โทรศัพท์ต้องตรงตามฟอร์แมตเบอร์ไทย (9-10 หลัก ขึ้นต้นด้วย 08, 09, 06, 02 ฯลฯ), รูปแบบอีเมล, และรหัสประจำตัวประชาชน/พาสปอร์ตไทย 13 หลัก
+   - แสดง Error Message ภาษาไทยชัดเจนใต้ช่องกรอกข้อมูลเมื่อป้อนผิดฟอร์แมต
 
 ---
 
 ## 🇬🇧 English Version
 
-### 1. Technical Overview
+### 1. Overview of the Project
 
-This project is a real-time patient intake system designed for clinics and hospitals. It consists of two main views:
-1. **Patient Registration Form (`/patient`)**: A 12-field form organized into clear cards to avoid overwhelming the patient. Built using React Hook Form and Zod validation, it tracks field focus, changes, and blur events to stream updates in real time.
-2. **Staff Live Monitoring Dashboard (`/staff`)**: A dark-themed dashboard for clinical staff to view active patient draft statuses (`inactive`, `filling`, `submitted`), see live field highlights as the patient types, and inspect submitted patient records.
+A real-time patient intake system and staff monitoring dashboard built with Next.js 15 (App Router, without a `src` directory), Supabase Realtime, Tailwind CSS, and React Hook Form with Zod validation.
 
-**Tech Stack:**
-- **Framework**: Next.js 15 (App Router) + React 19
-- **Real-Time Engine**: Supabase Realtime (Broadcast Channels) with automatic LocalStorage fallback
+The system is split into two primary views:
+1. **Patient Registration Portal (`/patient`)**: A 12-field registration form grouped into 4 distinct cards. It captures field focus, change, and blur events, validates input via Zod schemas, and streams form progress in real time.
+2. **Staff Live Monitoring Dashboard (`/staff`)**: A dark-themed monitoring interface for healthcare staff to track active patient form states (`inactive`, `filling`, `submitted`), see live field focus indicators, and inspect submitted intake records without manual page refreshes.
+
+**Core Tech Stack:**
+- **Framework**: Next.js 15 (App Router) + React 19 + TypeScript
+- **Real-Time Sync**: Supabase Realtime (`@supabase/supabase-js`) Broadcast Channels with automatic LocalStorage event sync fallback
 - **Form Management**: React Hook Form + Zod (`@hookform/resolvers/zod`)
-- **Styling**: Tailwind CSS v4 + Lucide React Icons
+- **Styling**: Tailwind CSS v4 + Lucide React icons
 
 ---
 
-### 2. Project Structure
+### 2. Setup / Local Development Instructions
 
-This project uses the standard Next.js App Router structure without a `src` directory:
+Follow these steps to set up and run the project locally:
 
-```text
-.
-├── app/
-│   ├── globals.css         # Global Tailwind CSS configuration
-│   ├── layout.tsx          # Root layout file
-│   ├── page.tsx            # Landing page with role selection (Patient / Staff)
-│   ├── patient/
-│   │   └── page.tsx        # Patient intake form page
-│   └── staff/
-│       └── page.tsx        # Staff monitoring dashboard
-├── components/
-│   └── ui/
-│       ├── Button.tsx      # Reusable button component
-│       ├── Input.tsx       # Reusable input component with icons and error displays
-│       └── StatusBadge.tsx # Status badge component (Inactive, Filling, Submitted)
-├── hooks/
-│   └── useRealTimeSync.ts  # Central custom hook for Supabase Realtime, debouncing, and sync
-├── lib/
-│   └── supabase.ts        # Supabase client setup with fallback credentials
-├── types/
-│   └── patient.ts         # TypeScript types, Zod schemas, and Thai label mappings
-├── package.json
-└── README.md
+#### Step 1: Clone Repository & Install Dependencies
+```bash
+git clone https://github.com/gungun5940/agnos-patient-monitoring-system.git
+cd agnos-patient-monitoring-system
+npm install
 ```
 
-#### Key Architecture & UI/UX Notes:
-- **12-Field Card Layout**: Grouping fields into 4 distinct cards (*Personal Info*, *Contact Info*, *Demographics/Language*, and *Emergency Contact*) reduces cognitive load for patients.
-- **Dark Mode Staff Dashboard**: Uses dark slate tones (`bg-slate-950`) to reduce screen fatigue for staff members monitoring screens over long shifts.
-- **Reusable Components**: Separating `Input`, `Button`, and `StatusBadge` keeps the codebase DRY and easy to maintain.
-
----
-
-### 3. Real-Time Data Flow & Sync Workflow
-
-```text
-[ Patient Focuses / Types in Form ]
-           │
-           ▼
-[ React Hook Form ] (Captures Focus, Change, Blur events)
-           │
-           ▼
-[ useRealTimeSync Hook ]
-   ├── Immediately updates status to "filling" and broadcasts active field name
-   └── Debounces form data payloads by 3 seconds (3000ms)
-           │
-           ▼
-[ Supabase Broadcast Channel ] (Fallback: Cross-tab LocalStorage Event)
-           │
-           ▼
-[ Staff Dashboard (/staff) ]
-   ├── Updates Status Badge (Filling / Inactive / Submitted)
-   ├── Highlights the active input field with a pulsing outline
-   └── Renders draft values and submitted records live
+#### Step 2: Configure Environment Variables (Optional)
+Create a `.env.local` file in the root directory. If omitted, the app automatically relies on built-in fallback configurations and cross-tab LocalStorage sync:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-- **3-Second Debounce**: To avoid excessive WebSocket messages while typing, draft text updates are debounced by 3000ms, while active field focus is broadcasted instantly.
-- **Automatic Inactive Reset**: When all fields are unfocused or when the patient navigates away, the status resets back to `inactive`.
+#### Step 3: Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser. For testing:
+- Open `/patient` in one window.
+- Open `/staff` in another window side-by-side.
+- Type in the patient form and observe instant real-time updates on the staff dashboard.
+
+#### Step 4: Build & Production Start
+```bash
+npm run build
+npm run start
+```
 
 ---
 
-### 4. How to Run / Setup Instructions
+### 3. Descriptions of Bonus Features Implemented
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/gungun5940/agnos-patient-monitoring-system.git
-   cd agnos-patient-monitoring-system
-   ```
+1. **3-Second Debounce & Smart Inactive State Switching**:
+   - Focus updates are broadcast instantly so staff can see which field the patient touched.
+   - Text payload updates are debounced by 3,000ms (3 seconds) to prevent socket flooding while typing rapidly.
+   - When all fields lose focus or the patient leaves the page via the back button, `resetSyncState()` recalculates the state and reverts status to `inactive` cleanly.
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+2. **Live Field Highlighting**:
+   - The staff dashboard highlights the active field currently being edited with a glowing cyan border and animated Thai text indicator (e.g., *"กำลังกรอก: ชื่อจริง"*).
 
-3. **Configure Environment Variables (Optional)**:
-   Create a `.env.local` file in the root directory (if skipped, fallback credentials and LocalStorage sync will be used):
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   ```
-
-4. **Start the Development Server**:
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser:
-   - Open `/patient` in one window.
-   - Open `/staff` in another window side-by-side to observe real-time updates.
-
----
-
-### 5. Bonus Features Implemented
-
-1. **Live Field Highlighting**: Staff can see exactly which field the patient is currently editing through a glowing cyan border and a Thai field label indicator.
-2. **Zod Validation with Thai Error Messages**: Enforces strict checks for Thai phone numbers, email formatting, and 13-digit Thai ID card / passport numbers.
-3. **Clean Reset on Back Navigation**: Navigating away from the patient form or submitting automatically clears active field indicators on the staff monitor.
-4. **Dual Sync Engine**: Combines Supabase Realtime Broadcast with cross-tab `window.addEventListener('storage')` fallback for robust offline or demo testing.
+3. **Strict Zod Form Validation**:
+   - Validates all 12 form fields before submission, enforcing rules such as Thai mobile/landline phone patterns (9-10 digits), 13-digit Thai National ID/passport formats, and valid email syntax with localized Thai error messages.
 
 ---
 
 ## License
 MIT License
-# agnos-patient-monitoring-system
