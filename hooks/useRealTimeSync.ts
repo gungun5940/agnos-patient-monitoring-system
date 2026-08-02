@@ -39,7 +39,7 @@ const STORAGE_SYNC_EVENT_KEY = 'patient_sync_event_v2';
 const STORAGE_ACTIVE_SESSIONS_KEY = 'patient_active_sessions_v3';
 
 async function safeSendSupabase(channel: RealtimeChannel | null, payload: BroadcastPayload) {
-  if (!channel || (channel as any).state !== 'joined') return;
+  if (!channel) return;
   const broadcastData = {
     type: 'broadcast' as const,
     event: 'patient_event',
@@ -47,10 +47,7 @@ async function safeSendSupabase(channel: RealtimeChannel | null, payload: Broadc
   };
 
   try {
-    const res = channel.send(broadcastData);
-    if (res && typeof res.catch === 'function') {
-      await res.catch(() => {});
-    }
+    channel.send(broadcastData);
   } catch {
     // Ignore error
   }
@@ -443,6 +440,23 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
       });
 
       setActiveSessionsMap(newMap);
+      saveActiveSessionsMap(newMap);
+    });
+
+    // Listen to Presence Leave Events
+    channel.on('presence', { event: 'leave' }, ({ leftPresences }) => {
+      if (leftPresences && Array.isArray(leftPresences)) {
+        setActiveSessionsMap((prev) => {
+          const copy = { ...prev };
+          leftPresences.forEach((lp: any) => {
+            if (lp && lp.sessionId) {
+              delete copy[lp.sessionId];
+            }
+          });
+          saveActiveSessionsMap(copy);
+          return copy;
+        });
+      }
     });
 
     channel.subscribe((subStatus: string) => {
@@ -532,6 +546,21 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
         activeFieldName: currentActiveLabel,
         updatedAt: now,
       });
+
+      if (channelRef.current) {
+        try {
+          channelRef.current.track({
+            sessionId,
+            status: 'filling',
+            formData: mergedFormData,
+            activeField: currentActiveField,
+            activeFieldName: currentActiveLabel,
+            updatedAt: now,
+          });
+        } catch {
+          // Ignore presence track error
+        }
+      }
     },
     [sessionId, safeSendPayload, updateSessionInMap]
   );
@@ -580,6 +609,21 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
         activeFieldName: null,
         updatedAt: now,
       });
+
+      if (channelRef.current) {
+        try {
+          channelRef.current.track({
+            sessionId,
+            status: newStatus,
+            formData: mergedFormData,
+            activeField: null,
+            activeFieldName: null,
+            updatedAt: now,
+          });
+        } catch {
+          // Ignore presence track error
+        }
+      }
     },
     [sessionId, safeSendPayload, updateSessionInMap]
   );
@@ -662,6 +706,14 @@ export function useRealTimeSync(): UseRealTimeSyncReturn {
       delete copy[sessionId];
       return copy;
     });
+
+    if (channelRef.current) {
+      try {
+        channelRef.current.untrack();
+      } catch {
+        // Ignore untrack error
+      }
+    }
 
     safeSendPayload({
       type: 'session_leave',
